@@ -207,56 +207,6 @@ class HTMLWriter:
     return text
 
   def generate_doc_file(file):
-    file.write("""
-  <html>
-      <head>
-          <title>Hatch Game Engine Documentation</title>
-          <style>
-              body {
-                  background-color: white;
-                  font-family: sans-serif;
-                  margin: 64px;
-              }
-              codefrag {
-                  display: inline;
-                  margin: 0px;
-                  font-family: monospace;
-              }
-              a {
-                  text-decoration: none;
-                  color: #4141F2;
-              }
-              .function_list {
-                  font-family: monospace;
-                  margin-top: 0.5em;
-              }
-              .function_list li {
-                  margin-top: 0.125em;
-                  margin-bottom: 0.125em;
-              }
-              code, pre.code {
-                  background-color: #f2f2f2;
-                  border-radius: 3px;
-                  padding: 3px;
-              }
-              codeBlock {
-                  background-color: #f2f2f2;
-                  border-radius: 3px;
-                  padding: 3px;
-                  line-height: 100%;
-                  word-break: normal;
-                  font-family: monospace;
-              }
-          </style>
-      </head>
-
-      <body>
-          <div style=\"position: fixed; margin-top: -32px; margin-left: -96px; width: 100%; text-align: right; \">
-              <a href=\"#Reference_top\">Back to top</a>
-          </div>
-          <h1 id=\"Reference_top\">Hatch Game Engine Reference</h1>"""
-    )
-
     namespace_link_list = ""
     namespace_contents_list = ""
     docs_text = ""
@@ -279,10 +229,21 @@ class HTMLWriter:
       if Writer.can_write_docs(type):
         docs_text += HTMLWriter.write_docs(type)
 
-    file.write(namespace_link_list)
-    file.write("        <hr/>\n")
-    file.write(namespace_contents_list)
-    file.write("        <hr/>\n")
-    file.write(docs_text)
-    file.write("    </body>\n")
-    file.write("</html>\n")
+    # Write to file
+    file.write(f"""<html>
+  <head>
+    <title>Hatch Game Engine Documentation</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div style="position: fixed; margin-top: -32px; margin-left: -96px; width: 100%; text-align: right;">
+        <a href="#Reference_top">Back to top</a>
+    </div>
+    <h1 id="Reference_top">Hatch Game Engine Reference</h1>
+    {namespace_link_list}
+    <hr/>
+    {namespace_contents_list}
+    <hr/>
+    {docs_text}
+  </body>
+</html>""")
