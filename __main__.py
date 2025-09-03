@@ -4,6 +4,7 @@ import os, argparse, glob
 import doc_globals
 
 from sys import stdout, stderr
+from enums import DefType
 from marker import Marker
 from doc_def import DocDef
 from parser import Parser
@@ -36,6 +37,7 @@ def main(args, arg_count):
   doc_globals.init()
 
   read_docs(input_paths)
+  process_docs(doc_globals.lists)
   write_docs(output_file)
 
 def read_file(file):
@@ -74,6 +76,12 @@ def open_and_read_file(path):
 def open_and_read_files_in_folder(path):
   for filename in glob.glob(path + "/**/*.cpp", recursive=True):
     open_and_read_file(filename)
+
+def process_docs(lists):
+  # Sort namespace and enum lists alphabetically
+  for type in DefType:
+      if type == DefType.FUNCTION or type == DefType.METHOD or type == DefType.ENUM:
+        lists[type.value].namespace_list.sort()
 
 def write_docs(output_file):
   HTMLWriter.generate_doc_file(output_file)

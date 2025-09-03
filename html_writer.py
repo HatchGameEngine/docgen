@@ -212,11 +212,6 @@ class HTMLWriter:
     docs_text = ""
 
     for type in DefType:
-      # Sort namespace list alphabetically
-      if type == DefType.FUNCTION or type == DefType.METHOD or type == DefType.ENUM:
-        group = doc_globals.lists[type.value]
-        group.namespace_list.sort()
-
       # Write out all namespaces
       if Writer.can_write_namespace_link_list(type):
         namespace_link_list += HTMLWriter.write_namespace_link_list(type)
