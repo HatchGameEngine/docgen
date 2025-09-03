@@ -1,12 +1,42 @@
 #!/usr/bin/env python3
 
+import os, argparse, glob
 import doc_globals
-import glob
 
+from sys import stdout, stderr
 from marker import Marker
 from doc_def import DocDef
 from parser import Parser
 from html_writer import HTMLWriter
+
+arg_parser = argparse.ArgumentParser(prog = 'docgen')
+arg_parser.add_argument(
+  '-i', '--input',
+  nargs = '*',
+  help = 'The input files, or path to a directory containing the files'
+)
+arg_parser.add_argument(
+  '-o', '--output',
+  help='The output file, or stdout if omitted',
+  nargs = '?',
+  type = argparse.FileType('w'),
+  default = stdout
+)
+
+def main(args, arg_count):
+  if arg_count < 2 or '-h' in args or '--help' in args:
+    arg_parser.print_help()
+    return
+
+  parsed_args = arg_parser.parse_args(args[1:])
+
+  input_paths = parsed_args.input
+  output_file = parsed_args.output
+
+  doc_globals.init()
+
+  read_docs(input_paths)
+  write_docs(output_file)
 
 def read_file(file):
   is_parsing_doc = False
@@ -30,32 +60,23 @@ def read_file(file):
     elif is_parsing_doc:
       doc_lines.append(line)
 
-def read_docs(source_folder):
-  doc_globals.init()
+def read_docs(input_paths):
+  for path in input_paths:
+    if os.path.isdir(path):
+      open_and_read_files_in_folder(path)
+    else:
+      open_and_read_file(path)
 
-  for filename in glob.glob(source_folder + "/**/*.cpp", recursive=True):
-    with open(filename) as file:
-      read_file(file)
+def open_and_read_file(path):
+  with open(path) as file:
+    read_file(file)
+
+def open_and_read_files_in_folder(path):
+  for filename in glob.glob(path + "/**/*.cpp", recursive=True):
+    open_and_read_file(filename)
 
 def write_docs(output_file):
-  with open(output_file, "w") as file:
-    HTMLWriter.generate_doc_file(file)
-
-def main(argv, argc):
-  source_folder = None
-  output_file = None
-
-  if argc >= 2:
-    source_folder = argv[1]
-    if argc >= 3:
-      output_file = argv[2]
-
-  if source_folder == "--usage" or not source_folder or not output_file:
-    print("usage: docgen <source path> <output file>")
-    return
-
-  read_docs(source_folder)
-  write_docs(output_file)
+  HTMLWriter.generate_doc_file(output_file)
 
 if __name__ == '__main__':
   from sys import argv, exit
