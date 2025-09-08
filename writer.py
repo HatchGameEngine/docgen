@@ -53,6 +53,9 @@ class Writer:
     return parameter_text
 
   def process_description(input):
+    if input is None:
+      return None
+
     LINKTO_TAG = "linkto"
 
     index = 0
@@ -122,4 +125,9 @@ class Writer:
         index = len(output)
         input = output + input[tag_end+1:]
 
-    return input
+    output = input
+
+    if output.isspace() or len(output) == 0:
+      return None
+
+    return output

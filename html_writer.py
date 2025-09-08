@@ -88,7 +88,7 @@ class HTMLWriter:
     return f"        <h3 style=\"margin-bottom: 8px;\"><code>{doc.get_title()}</code></h2>\n"
 
   def write_docdef_description(doc):
-    description = Writer.process_description(doc.description)
+    description = Writer.process_description(doc.description) or ""
     return f"        <div style=\"margin-top: 8px; font-size: 14px;\">{description}</div>\n"
 
   def write_docdef_type(doc):
@@ -125,16 +125,15 @@ class HTMLWriter:
       text += "        <ul style=\"margin-top: 0px; font-size: 14px;\">\n"
 
       for param in doc.params:
-        description = Writer.process_description(param.label)
+        description = Writer.process_description(param.label) or ""
         text += f"        <li>{description}</li>\n"
 
       text += "        </ul>\n"
 
-    if returns is not None:
-      description = Writer.process_description(returns)
-
+    returns_description = Writer.process_description(returns)
+    if returns_description is not None:
       text += "        <div style=\"font-weight: bold; margin-top: 8px;\">Returns:</div>\n"
-      text += f"        <div style=\"font-size: 14px;\">{description}</div>\n"
+      text += f"        <div style=\"font-size: 14px;\">{returns_description}</div>\n"
 
     return text
 

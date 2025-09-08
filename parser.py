@@ -6,6 +6,8 @@ class Parser:
   def parse_base_def_marker(doc_def, line, lines, line_num):
     if line.startswith(Marker.DESC):
       description, num_lines = Marker.get_multiline(Marker.DESC, lines, line_num)
+      if description.isspace() or len(description) == 0:
+        description = None
       doc_def.description = description
       return num_lines
     elif line.startswith(Marker.NAMESPACE):
