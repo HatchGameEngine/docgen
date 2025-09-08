@@ -35,7 +35,7 @@ class Writer:
     for parameter in doc.params:
       label = parameter.label[0:parameter.label.find('(') - 1]
 
-      if parameter.optional and end_optional_parameters:
+      if parameter.optional and not end_optional_parameters:
         parameter_text += "["
         end_optional_parameters = True
 
