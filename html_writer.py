@@ -206,6 +206,13 @@ class HTMLWriter:
 
     return text
 
+  def read_stylesheet(path):
+    try:
+      with open(path, 'r', encoding = 'utf-8') as file:
+        return file.read()
+    except FileNotFoundError:
+      return ""
+
   def generate_doc_file(file):
     namespace_link_list = ""
     namespace_contents_list = ""
@@ -224,11 +231,16 @@ class HTMLWriter:
       if Writer.can_write_docs(type):
         docs_text += HTMLWriter.write_docs(type)
 
+    # Read stylesheet
+    stylesheet_data = HTMLWriter.read_stylesheet("style.css")
+
     # Write to file
     file.write(f"""<html>
   <head>
     <title>Hatch Game Engine Documentation</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+    {stylesheet_data}
+    </style>
   </head>
   <body>
     <div style="position: fixed; margin-top: -32px; margin-left: -96px; width: 100%; text-align: right;">
