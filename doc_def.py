@@ -12,13 +12,14 @@ class DocDef:
 
   def get_title(self):
     if DefType.is_field(self.type) or self.type == DefType.METHOD:
+      namespace = self.namespace
       if self.type == DefType.FIELD or self.type == DefType.METHOD:
-        return self.namespace.lower() + "." + self.title
-      return self.namespace + "." + self.title
+        namespace = namespace.lower()
+      return namespace + "." + self.title
     return self.title
 
   def get_name_for_html(self):
-    return self.title.replace('.', '_')
+    return self.get_title().replace('.', '_')
 
   def get_href(self):
     return "Reference_" + defTypeNames[self.type][0] + "_" + self.get_name_for_html()
