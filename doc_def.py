@@ -1,5 +1,7 @@
 import doc_globals
 
+import re
+
 from enums import DefType, defTypeNames
 from namespace_info import NamespaceInfo
 
@@ -8,13 +10,12 @@ class DocDef:
     self.type = None
     self.title = None
     self.description = None
+    self.deprecated = None
     self.namespace = None
 
   def get_title(self):
     if DefType.is_field(self.type) or self.type == DefType.METHOD:
       namespace = self.namespace
-      if self.type == DefType.FIELD or self.type == DefType.METHOD:
-        namespace = namespace.lower()
       return namespace + "." + self.title
     return self.title
 
@@ -36,10 +37,30 @@ class DocDef:
     if DefType.is_field(doc_def.type):
       doc_globals.lists[DefType.FUNCTION.value].add_namespace(doc_def)
 
+    if DefType.is_descriptive(doc_def.type):
+      doc_globals.descriptions[doc_def.title] = doc_def
+
+  def find_description(title):
+    if title in doc_globals.descriptions:
+      return doc_globals.descriptions[title]
+
+    return None
+
 class ParamDef:
-  def __init__(self, label, optional):
-    self.label = label
+  DEFAULT_PATTERN = r'\(default:\s*`([^`]+)`\)'
+
+  def __init__(self, text, optional):
+    self.text = text
+    self.label = text[0:text.find('(')].strip()
+    self.description = text[text.find(':')+1:].strip()
+    self.type = re.search(r'\((.+?)\)', text[0:text.find(':')]).group(1)
+    self.default_value = None
     self.optional = optional
+
+    match = re.search(self.DEFAULT_PATTERN, self.description)
+    if match:
+      self.default_value = match.group(1)
+      self.description = re.sub(self.DEFAULT_PATTERN, '', self.description)
 
 class FunctionDef(DocDef):
   def __init__(self):
@@ -48,6 +69,7 @@ class FunctionDef(DocDef):
     self.type = DefType.FUNCTION
     self.params = []
     self.returns = None
+    self.return_type = "void"
 
 class EnumDef(DocDef):
   def __init__(self):

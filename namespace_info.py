@@ -6,7 +6,6 @@ class NamespaceInfo:
   all = {}
 
   def __init__(self):
-    self.name = None
     self.is_enum_namespace = False
     self.docs_per_def = None
 

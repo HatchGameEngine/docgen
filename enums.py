@@ -9,6 +9,11 @@ class DefType(Enum):
   ENUM = 5
   CONSTANT = 6
   GLOBAL_VAR = 7
+  CLASS = 8
+  NAMESPACE = 9
+
+  def is_descriptive(type):
+    return type == DefType.CLASS or type == DefType.NAMESPACE
 
   def is_field(type):
     return type == DefType.FIELD or type == DefType.CLASS_FIELD
@@ -24,5 +29,7 @@ defTypeNames = {
   DefType.CLASS_FIELD: ("class fields", "Class fields"),
   DefType.ENUM: ("enums", "Enums"),
   DefType.CONSTANT: ("constants", "Constants"),
-  DefType.GLOBAL_VAR: ("globals", "Globals")
+  DefType.GLOBAL_VAR: ("globals", "Globals"),
+  DefType.CLASS: ("classes", "Classes"),
+  DefType.NAMESPACE: ("namespaces", "Namespaces")
 }

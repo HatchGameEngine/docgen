@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, argparse, glob
+import os, argparse, pathlib, glob
 import doc_globals
 
 from sys import stdout, stderr
@@ -9,6 +9,7 @@ from marker import Marker
 from doc_def import DocDef
 from parser import Parser
 from html_writer import HTMLWriter
+from doxygen_writer import DoxygenWriter
 
 arg_parser = argparse.ArgumentParser(prog = 'docgen')
 arg_parser.add_argument(
@@ -18,10 +19,15 @@ arg_parser.add_argument(
 )
 arg_parser.add_argument(
   '-o', '--output',
-  help='The output file, or stdout if omitted',
+  help='The output path, or stdout if omitted',
   nargs = '?',
-  type = argparse.FileType('w'),
+  type = pathlib.Path,
   default = stdout
+)
+arg_parser.add_argument(
+  '--dox', '--doxygen',
+  help='Generate documentation for Doxygen',
+  action='store_true'
 )
 
 def main(args, arg_count):
@@ -38,7 +44,7 @@ def main(args, arg_count):
 
   read_docs(input_paths)
   process_docs(doc_globals.lists)
-  write_docs(output_file)
+  write_docs(output_file, parsed_args)
 
 def read_file(file):
   is_parsing_doc = False
@@ -83,8 +89,16 @@ def process_docs(lists):
       if type == DefType.FUNCTION or type == DefType.METHOD or type == DefType.ENUM:
         lists[type.value].namespace_list.sort()
 
-def write_docs(output_file):
-  HTMLWriter.generate_doc_file(output_file)
+def write_docs(output_file, parsed_args):
+  if parsed_args.dox == True:
+    if output_file == stdout or output_file.is_file():
+      raise ValueError("Must specify path (not file) when exporting Doxygen documentation")
+    DoxygenWriter.generate_files(output_file)
+  elif output_file == stdout:
+    HTMLWriter.generate_doc_file(output_file)
+  else:
+    with output_file.open(mode='w') as file:
+      HTMLWriter.generate_doc_file(file)
 
 if __name__ == '__main__':
   from sys import argv, exit

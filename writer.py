@@ -1,3 +1,5 @@
+import re
+
 import doc_globals
 
 from enums import DefType
@@ -5,10 +7,13 @@ from parser import Parser
 
 class Writer:
   def can_write_docs(type):
+    if is_descriptive(type):
+      return False
+
     return doc_globals.lists[type.value].count > 0
 
   def can_write_namespace_link_list(type):
-    if DefType.is_field(type) or type == DefType.CONSTRUCTOR:
+    if DefType.is_field(type) or type == DefType.CONSTRUCTOR or is_descriptive(type):
       return False
 
     if type == DefType.FUNCTION or type == DefType.METHOD or type == DefType.ENUM:
@@ -21,7 +26,7 @@ class Writer:
     return True
 
   def can_write_namespace_contents_list(type):
-    if type == DefType.CONSTANT or type == DefType.GLOBAL_VAR:
+    if type == DefType.CONSTANT or type == DefType.GLOBAL_VAR or is_descriptive(type):
       return False
 
     return Writer.can_write_namespace_link_list(type)
@@ -33,7 +38,7 @@ class Writer:
     end_optional_parameters = False
 
     for parameter in doc.params:
-      label = parameter.label[0:parameter.label.find('(') - 1]
+      label = parameter.label
 
       if parameter.optional and not end_optional_parameters:
         parameter_text += "["
@@ -52,82 +57,25 @@ class Writer:
 
     return parameter_text
 
-  def process_description(input):
+  def process_description(input, is_doxygen = False, use_html_code = True, use_html_links = True):
     if input is None:
       return None
 
-    LINKTO_TAG = "linkto"
-
-    index = 0
-
-    while True:
-      replace_start = None
-      link_to = None
-      will_replace = False
-      found_link = False
-      use_code = False
-
-      tag_start = input[index:].find('<')
-      if tag_start == -1:
-        break
-
-      tag_start += index
-      tag_end = input[tag_start+1:].find('>')
-      if tag_end == -1:
-        break
-
-      tag_end += tag_start + 1
-      content_start = tag_end + 1
-
-      # Check if this is a linkto tag
-      linkto_pos = input[tag_start+1:].find(LINKTO_TAG)
-      if linkto_pos != -1:
-        linkto_pos += tag_start + 1 + len(LINKTO_TAG)
-        tag_params = Parser.parse_desc_xml_tag_params(input[linkto_pos:tag_end])
-
-        if 'ref' in tag_params:
-          if tag_params['ref'] in doc_globals.href:
-            link_to = tag_params["ref"]
-            found_link = True
-
-          replace_start = input[:tag_start]
-          will_replace = True
-
-      tag_start = input[content_start:].find('</')
-      if tag_start == -1:
-        break
-
-      tag_start += content_start
-      tag_end = input[tag_start+1:].find('>')
-      if tag_end == -1:
-        break
-
-      tag_end += tag_start + 1
-      index = tag_end + 1
-
-      if will_replace:
-        contents = input[content_start:tag_start]
-        if len(contents) == 0:
-          contents = link_to or ''
-          use_code = True
-
-        if use_code:
-          replace_start += "<code>"
-        if found_link:
-          replace_start += "<a href=\"#" + doc_globals.href[link_to] + "\">"
-
-        output = replace_start + contents
-        if found_link:
-          output += "</a>"
-        if use_code:
-          output += "</code>"
-
-        index = len(output)
-        input = output + input[tag_end+1:]
+    if is_doxygen:
+      use_html_links = False
+      use_html_code = False
 
     output = input
 
-    if output.isspace() or len(output) == 0:
-      return None
+    # Replace backticks with <code>...</code> if using HTML
+    if use_html_code:
+      def convert_fn(match):
+        match = match.group(1)
+        return f"<code>{match}</code>"
+
+      output = re.sub(r'`([^`]*)`', convert_fn, output)
+
+    output = Parser.parse_ref(output, is_doxygen, use_html_links)
+    output = Parser.parse_param_ref(output, is_doxygen, use_html_links)
 
     return output

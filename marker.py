@@ -14,6 +14,8 @@ class Marker:
   GLOBAL = make("global")
   FIELD = make("field")
   CLASS_FIELD = make("classfield")
+  CLASS = make("class")
+  NAMESPACE = make("namespace")
 
   DESC = make("desc")
   PARAM = make("param")
@@ -21,7 +23,8 @@ class Marker:
   PARAM_OPT = make("paramOpt")
   TYPE = make("type")
   DEFAULT = make("default")
-  NAMESPACE = make("ns")
+  DEPRECATED = make("deprecated")
+  NS = make("ns")
 
   to_def_type = [
     (METHOD, DefType.METHOD),
@@ -30,7 +33,9 @@ class Marker:
     (CLASS_FIELD, DefType.CLASS_FIELD),
     (ENUM, DefType.ENUM),
     (CONSTANT, DefType.CONSTANT),
-    (GLOBAL, DefType.GLOBAL_VAR)
+    (GLOBAL, DefType.GLOBAL_VAR),
+    (CLASS, DefType.CLASS),
+    (NAMESPACE, DefType.NAMESPACE)
   ]
 
   def get(marker, line):

@@ -1,17 +1,31 @@
+import re
+import xml.etree.ElementTree as ET
+
 from enums import DefType
 from doc_def import DocDef, FunctionDef, ParamDef, EnumDef, ConstantDef, FieldDef
 from marker import Marker
 
+import doc_globals
+
 class Parser:
+  REF_PATTERN = r'<ref (.*?)>'
+
+  HTML_BREAK_STR = '<br/>'
+
   def parse_base_def_marker(doc_def, line, lines, line_num):
     if line.startswith(Marker.DESC):
       description, num_lines = Marker.get_multiline(Marker.DESC, lines, line_num)
-      if description.isspace() or len(description) == 0:
+      description = description.strip()
+      if len(description) == 0:
         description = None
       doc_def.description = description
       return num_lines
-    elif line.startswith(Marker.NAMESPACE):
-      doc_def.namespace = Marker.get(Marker.NAMESPACE, line)
+    elif line.startswith(Marker.DEPRECATED):
+      deprecated, num_lines = Marker.get_multiline(Marker.DEPRECATED, lines, line_num)
+      doc_def.deprecated = deprecated.strip()
+      return num_lines
+    elif line.startswith(Marker.NS):
+      doc_def.namespace = Marker.get(Marker.NS, line)
       return 0
 
     return None
@@ -41,7 +55,22 @@ class Parser:
         # return
         elif line.startswith(Marker.RETURN):
           result, num_lines = Marker.get_multiline(Marker.RETURN, lines, line_num)
-          doc_def.returns = result
+          match = re.search(Parser.REF_PATTERN, result.strip())
+          if match:
+            start, end = match.span()
+            if start == 0:
+              result = result[:start] + result[end:]
+              doc_def.return_type = Parser.parse_ref(match.group(0))
+              doc_def.returns = result.strip()
+            else:
+              match = None
+          if not match:
+            split_result = result.split(maxsplit = 1)
+            if len(split_result):
+              doc_def.return_type = split_result[0]
+              doc_def.returns = split_result[1]
+            else:
+              doc_def.returns = result
 
       line_num += num_lines or 0
 
@@ -114,7 +143,7 @@ class Parser:
         line_num += num_lines
       # type
       elif line.startswith(Marker.TYPE):
-        doc_def.value_type = Marker.get(Marker.TYPE, line)
+        doc_def.value_type = Parser.parse_ref(Marker.get(Marker.TYPE, line))
       # default
       elif line.startswith(Marker.DEFAULT):
         doc_def.default_value = Marker.get(Marker.DEFAULT, line)
@@ -151,29 +180,41 @@ class Parser:
 
     return Parser.parse_function_def(title, DefType.FUNCTION, lines[1:])
 
-  def parse_desc_xml_tag_params(input):
-    tag_params = {}
+  def parse_ref(input, use_doxygen_refs = False, use_html_links = False):
+    if input is None:
+      return None
 
-    input = input.strip()
+    def convert_fn(match):
+      match = match.group(1)
+      if use_html_links:
+        if match in doc_globals.href:
+          return f"<a href=\"#{doc_globals.href[match]}\">{match}</a>"
+        else:
+          return match
+      else:
+        replaced = match.replace('_*', '')
+        if use_doxygen_refs:
+          return f"\\ref {replaced}"
+        else:
+          return replaced
 
-    while len(input) > 0:
-      quote_start = input.find('"')
-      if quote_start == -1:
-        break
+    output = re.sub(Parser.REF_PATTERN, convert_fn, input)
 
-      param = input[:quote_start-1]
-      if len(param) == 0:
-        break
+    return output
 
-      quote_end = input[quote_start+1:].find('"')
-      if quote_end == -1:
-        break
+  def parse_param_ref(input, is_doxygen, use_html_code):
+    if input is None:
+      return None
 
-      quote_end += quote_start + 1
-      quote_start += 1
+    def convert_fn(match):
+      match = match.group(1)
+      if is_doxygen:
+        return f"\\a {match}"
+      elif use_html_code:
+        return f"<code>{match}</code>"
+      else:
+        return match
 
-      tag_params[param] = input[quote_start:quote_end]
+    output = re.sub(r'<param (.*?)>', convert_fn, input)
 
-      input = input[quote_end+1:].strip()
-
-    return tag_params
+    return output

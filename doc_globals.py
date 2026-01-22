@@ -1,4 +1,5 @@
 href = {}
+descriptions = {}
 lists = []
 
 def init():

@@ -2,6 +2,7 @@ import doc_globals
 
 from enums import DefType, defTypeNames
 from namespace_info import NamespaceInfo
+from parser import Parser
 from writer import Writer
 
 class HTMLWriter:
@@ -125,13 +126,16 @@ class HTMLWriter:
       text += "        <ul style=\"margin-top: 0px; font-size: 14px;\">\n"
 
       for param in doc.params:
-        description = Writer.process_description(param.label) or ""
-        text += f"        <li>{description}</li>\n"
+        type = Parser.parse_ref(param.type, False, True)
+        description = Writer.process_description(param.description) or ""
+        if description:
+          description = f": {description}"
+        text += f"        <li><b>{param.label} ({type})</b>{description}</li>\n"
 
       text += "        </ul>\n"
 
     returns_description = Writer.process_description(returns)
-    if returns_description is not None:
+    if returns_description:
       text += "        <div style=\"font-weight: bold; margin-top: 8px;\">Returns:</div>\n"
       text += f"        <div style=\"font-size: 14px;\">{returns_description}</div>\n"
 
